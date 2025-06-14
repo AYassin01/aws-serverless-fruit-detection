@@ -1,0 +1,13 @@
+# AWS SAM
+.aws-sam/
+
+# Python
+__pycache__/
+*.pyc
+.env
+venv/
+env/
+
+# Local Files
+boto3_layer/
+test_api.sh

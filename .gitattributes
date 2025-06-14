@@ -1,0 +1,5 @@
+# Set the default behavior to automatically handle line endings
+* text=auto
+
+# Explicitly force LF line endings for shell scripts
+*.sh text eol=lf

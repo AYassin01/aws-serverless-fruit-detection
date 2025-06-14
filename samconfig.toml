@@ -1,0 +1,41 @@
+version = 0.1
+
+[default.global.parameters]
+# Global parameters that apply to all commands if not overridden
+# debug = true # Uncomment for verbose SAM output
+
+[default.validate.parameters]
+lint = true
+
+[default.build.parameters]
+cached = true
+parallel = true
+# use_container = true # Can be set globally here if always used
+
+[default.deploy.parameters]
+stack_name = "fruit-disease-detection-dev" # Will be overridden by STACK_NAME in deploy.sh if you use --stack-name there
+# s3_bucket = "my-sam-deployments-12345" # IMPORTANT: Create this S3 bucket first in your AWS account and region, or let SAM manage it
+s3_prefix = "fruit-disease-detection"
+region = "us-east-1" # IMPORTANT: Match this with REGION in deploy.sh
+confirm_changeset = true # Set to false for non-interactive CI/CD
+capabilities = "CAPABILITY_IAM" # Required because we create an IAM role
+parameter_overrides = "ProjectName=\"fruit-disease-detection\" Stage=\"dev\""
+# image_repositories = [] # If using container images for Lambda
+
+[default.package.parameters]
+# s3_bucket = "my-sam-deployments-12345" # Same S3 bucket
+s3_prefix = "fruit-disease-detection"
+output_template_file = "packaged.yaml"
+
+[default.delete.parameters]
+stack_name = "fruit-disease-detection-dev"
+region = "us-east-1"
+# no_prompts = true # For non-interactive delete
+
+# You can define other environments like 'prod'
+# [prod.deploy.parameters]
+# stack_name = "fruit-disease-detection-prod"
+# s3_bucket = "your-prod-sam-bucket"
+# region = "us-east-1"
+# capabilities = "CAPABILITY_IAM"
+# parameter_overrides = "ProjectName=\"fruit-disease-detection\" Stage=\"prod\""
