@@ -20,7 +20,6 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-        /* Custom spinner animation */
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -111,6 +110,9 @@
     <script>
         // --- CONFIGURATION ---
         const API_ENDPOINT = 'https://xb1hsjucfa.execute-api.us-east-1.amazonaws.com/Prod/detect';
+        
+
+        const API_KEY = 'PASTE_YOUR_API_KEY_HERE'; 
 
         // DOM Elements
         const fileUpload = document.getElementById('file-upload');
@@ -135,7 +137,7 @@
                     imagePreview.classList.remove('hidden');
                     uploadPrompt.classList.add('hidden');
                     analyzeButton.classList.remove('hidden');
-                    resultsSection.classList.add('hidden'); // Hide previous results
+                    resultsSection.classList.add('hidden'); 
                     errorDisplay.classList.add('hidden');
                 };
                 reader.readAsDataURL(file);
@@ -148,25 +150,38 @@
                 displayError("Please select an image file first.");
                 return;
             }
+            if (!API_KEY || API_KEY === 'PASTE_YOUR_API_KEY_HERE') {
+                displayError("API Key is not configured in the HTML file. Please edit the script section.");
+                return;
+            }
             setLoading(true);
 
             // Read file as Base64 for the API
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
-                    // The result includes the base64 prefix, remove it.
                     const base64Image = e.target.result.split(',')[1];
                     
                     const response = await fetch(API_ENDPOINT, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'text/plain' // As expected by your API Gateway mapping
+                            'Content-Type': 'text/plain',
+                            // --- THIS IS THE REQUIRED CHANGE ---
+                            // Include the API Key in the x-api-key header
+                            'x-api-key': API_KEY 
                         },
                         body: base64Image
                     });
                     
                     if (!response.ok) {
                         const errorData = await response.json();
+                        // Handle specific API Gateway errors
+                        if (response.status === 403) {
+                             throw new Error("Request Forbidden. Check if the API Key is correct and has been deployed.");
+                        }
+                        if (response.status === 429) {
+                             throw new Error("Limit Exceeded. You have reached the usage limit for this key.");
+                        }
                         throw new Error(errorData.message || `API request failed with status ${response.status}`);
                     }
                     
@@ -175,7 +190,7 @@
 
                 } catch (error) {
                     console.error("Error:", error);
-                    displayError(`An error occurred: ${error.message}`);
+                    displayError(`${error.message}`);
                 } finally {
                     setLoading(false);
                 }
@@ -200,7 +215,6 @@
             resultsContent.classList.remove('hidden');
             errorDisplay.classList.add('hidden');
 
-            // Handle cases where the model might not return all fields
             document.getElementById('fruit-type').textContent = data.fruit_type || 'N/A';
             document.getElementById('disease-name').textContent = data.disease_name || 'N/A';
             
@@ -229,7 +243,7 @@
         }
         
         function setSeverityColor(element, severity) {
-            element.classList.remove('text-green-600', 'text-yellow-600', 'text-red-600');
+            element.classList.remove('text-green-600', 'text-yellow-600', 'text-red-600', 'text-orange-600');
             switch(String(severity).toLowerCase()) {
                 case 'mild':
                     element.classList.add('text-yellow-600');
@@ -241,7 +255,7 @@
                     element.classList.add('text-red-600');
                     break;
                 default:
-                    element.classList.add('text-green-600'); // Healthy or N/A
+                    element.classList.add('text-green-600');
                     break;
             }
         }
@@ -256,3 +270,8 @@
     </script>
 </body>
 </html>
+```
+
+<!-- This HTML file is a complete web interface for AI-powered fruit disease detection. 
+     It allows users to upload an image, analyze it using an API, and display the results. 
+     Make sure to replace 'PASTE_YOUR_API_KEY_HERE' with your actual API key before using it. -->
