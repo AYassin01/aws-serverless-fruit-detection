@@ -56,7 +56,7 @@ The backend API can also be tested directly from the command line after deployme
 ## System Architecture
 The application follows a classic serverless, event-driven pattern. The architecture is designed for low latency, high scalability, and minimal operational overhead.
 
-![System Architecture](images\system_arch.jpg)
+![System Architecture](images\system-arch.jpg)
 
 ## Getting Started
 Follow these instructions to deploy the application in your own AWS account.
