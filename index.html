@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Fruit Disease Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .file-input-label {
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .file-input-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        /* Custom spinner animation */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-8 space-y-6">
+        <!-- Header -->
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-gray-800">AI Fruit Disease Detection</h1>
+            <p class="mt-2 text-gray-500">Upload an image to get an instant AI-powered analysis.</p>
+        </div>
+
+        <!-- Image Uploader -->
+        <div class="space-y-4">
+            <div id="image-uploader" class="relative block w-full border-2 border-gray-300 border-dashed rounded-lg p-12 text-center">
+                <div id="upload-prompt">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <p class="mt-2 text-sm text-gray-600">
+                        <label for="file-upload" class="relative font-medium text-indigo-600 hover:text-indigo-500 file-input-label">
+                            <span>Upload a file</span>
+                        </label>
+                        or drag and drop
+                    </p>
+                    <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                    <input id="file-upload" name="file-upload" type="file" class="sr-only" accept="image/*">
+                </div>
+                <img id="image-preview" src="" alt="Image preview" class="hidden max-h-64 mx-auto rounded-lg"/>
+            </div>
+            <button id="analyze-button" class="hidden w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <span id="button-text">Analyze Fruit</span>
+                <span id="button-loader" class="hidden spinner"></span>
+            </button>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results-section" class="hidden space-y-4 pt-4 border-t border-gray-200">
+            <h2 class="text-2xl font-bold text-gray-800 text-center">Analysis Results</h2>
+            
+            <div id="error-display" class="hidden p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg"></div>
+            
+            <div id="results-content" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-gray-100 p-4 rounded-lg">
+                        <p class="text-sm font-medium text-gray-500">Fruit Type</p>
+                        <p id="fruit-type" class="text-lg font-semibold text-gray-900"></p>
+                    </div>
+                    <div class="bg-gray-100 p-4 rounded-lg">
+                        <p class="text-sm font-medium text-gray-500">Disease Detected</p>
+                        <p id="disease-name" class="text-lg font-semibold text-gray-900"></p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div class="bg-gray-100 p-4 rounded-lg">
+                        <p class="text-sm font-medium text-gray-500">Confidence Score</p>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                            <div id="confidence-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <p id="confidence-score" class="text-center text-sm mt-1 font-semibold"></p>
+                    </div>
+                    <div class="bg-gray-100 p-4 rounded-lg">
+                        <p class="text-sm font-medium text-gray-500">Severity</p>
+                        <p id="severity" class="text-lg font-semibold text-gray-900"></p>
+                    </div>
+                </div>
+
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <p class="text-sm font-medium text-gray-500">Treatment Recommendations</p>
+                    <ul id="recommendations-list" class="mt-2 list-disc list-inside space-y-1 text-gray-700"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const API_ENDPOINT = 'https://xb1hsjucfa.execute-api.us-east-1.amazonaws.com/Prod/detect';
+
+        // DOM Elements
+        const fileUpload = document.getElementById('file-upload');
+        const imagePreview = document.getElementById('image-preview');
+        const analyzeButton = document.getElementById('analyze-button');
+        const uploadPrompt = document.getElementById('upload-prompt');
+        const resultsSection = document.getElementById('results-section');
+        const errorDisplay = document.getElementById('error-display');
+        const resultsContent = document.getElementById('results-content');
+        const buttonText = document.getElementById('button-text');
+        const buttonLoader = document.getElementById('button-loader');
+        
+        let file = null;
+
+        // Event Listener for file input
+        fileUpload.addEventListener('change', (event) => {
+            file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreview.src = e.target.result;
+                    imagePreview.classList.remove('hidden');
+                    uploadPrompt.classList.add('hidden');
+                    analyzeButton.classList.remove('hidden');
+                    resultsSection.classList.add('hidden'); // Hide previous results
+                    errorDisplay.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Event Listener for analyze button
+        analyzeButton.addEventListener('click', async () => {
+            if (!file) {
+                displayError("Please select an image file first.");
+                return;
+            }
+            setLoading(true);
+
+            // Read file as Base64 for the API
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    // The result includes the base64 prefix, remove it.
+                    const base64Image = e.target.result.split(',')[1];
+                    
+                    const response = await fetch(API_ENDPOINT, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'text/plain' // As expected by your API Gateway mapping
+                        },
+                        body: base64Image
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || `API request failed with status ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    displayResults(data);
+
+                } catch (error) {
+                    console.error("Error:", error);
+                    displayError(`An error occurred: ${error.message}`);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        function setLoading(isLoading) {
+            if (isLoading) {
+                buttonText.classList.add('hidden');
+                buttonLoader.classList.remove('hidden');
+                analyzeButton.disabled = true;
+            } else {
+                buttonText.classList.remove('hidden');
+                buttonLoader.classList.add('hidden');
+                analyzeButton.disabled = false;
+            }
+        }
+
+        function displayResults(data) {
+            resultsSection.classList.remove('hidden');
+            resultsContent.classList.remove('hidden');
+            errorDisplay.classList.add('hidden');
+
+            // Handle cases where the model might not return all fields
+            document.getElementById('fruit-type').textContent = data.fruit_type || 'N/A';
+            document.getElementById('disease-name').textContent = data.disease_name || 'N/A';
+            
+            const confidence = data.confidence ? (data.confidence * 100).toFixed(0) : 0;
+            const confidenceBar = document.getElementById('confidence-bar');
+            confidenceBar.style.width = `${confidence}%`;
+            document.getElementById('confidence-score').textContent = `${confidence}% Confidence`;
+            
+            const severityEl = document.getElementById('severity');
+            severityEl.textContent = data.severity || 'N/A';
+            setSeverityColor(severityEl, data.severity);
+
+            const recommendationsList = document.getElementById('recommendations-list');
+            recommendationsList.innerHTML = '';
+            if (data.treatment_recommendations && data.treatment_recommendations.length > 0) {
+                data.treatment_recommendations.forEach(rec => {
+                    const li = document.createElement('li');
+                    li.textContent = rec;
+                    recommendationsList.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = 'No recommendations available.';
+                recommendationsList.appendChild(li);
+            }
+        }
+        
+        function setSeverityColor(element, severity) {
+            element.classList.remove('text-green-600', 'text-yellow-600', 'text-red-600');
+            switch(String(severity).toLowerCase()) {
+                case 'mild':
+                    element.classList.add('text-yellow-600');
+                    break;
+                case 'moderate':
+                    element.classList.add('text-orange-600');
+                    break;
+                case 'severe':
+                    element.classList.add('text-red-600');
+                    break;
+                default:
+                    element.classList.add('text-green-600'); // Healthy or N/A
+                    break;
+            }
+        }
+
+        function displayError(message) {
+            resultsSection.classList.remove('hidden');
+            resultsContent.classList.add('hidden');
+            errorDisplay.textContent = message;
+            errorDisplay.classList.remove('hidden');
+        }
+
+    </script>
+</body>
+</html>
