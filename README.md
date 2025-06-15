@@ -35,8 +35,8 @@ This project includes both a user-friendly web interface for easy demonstration 
 **1. Web Interface Demo**
 
 The primary way to interact with the application is through the simple web UI. A user can upload an image and receive the analysis in seconds.
-![The Web UI](images\web_interface.jpg)
-![Upload an Image](images\upload_an_image.jpg)
+![The Web UI](images/web_interface.jpg)
+![Upload an Image](images/upload_an_image.jpg)
 
 
 **2. API Testing**
@@ -56,7 +56,7 @@ The backend API can also be tested directly from the command line after deployme
 ## System Architecture
 The application follows a classic serverless, event-driven pattern. The architecture is designed for low latency, high scalability, and minimal operational overhead.
 
-![System Architecture](images\systemarch.jpg)
+![System Architecture](images/systemarch.jpg)
 
 ## Getting Started
 Follow these instructions to deploy the application in your own AWS account.
